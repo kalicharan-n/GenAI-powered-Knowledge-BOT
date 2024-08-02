@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Admin Login</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff; /* White background */
+            color: #333333; /* Dark text color */
+        }
+
+        .login-container {
+            width: 300px;
+            margin: 100px auto;
+            padding: 40px;
+            background-color: #ffffff; /* White background */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Light shadow */
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 40px; /* Increase spacing */
+        }
+
+        .input-group {
+            margin-bottom: 30px; /* Increase spacing */
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px; /* Smaller font size */
+        }
+
+        .input-group input[type="password"] {
+            width: 100%;
+            padding: 12px; /* Increase padding */
+            border: 1px solid #cccccc; /* Light gray border */
+            border-radius: 20px; /* Rounder corners */
+            background-color: #f9f9f9; /* Light gray background */
+            color: #333333; /* Dark text color */
+            font-size: 16px; /* Larger font size */
+            transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+        }
+
+        .input-group input[type="password"]:focus {
+            border-color: #0066cc; /* CVS Health Blue on focus */
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 102, 204, 0.5); /* Light glow effect on focus */
+        }
+
+        .error-message {
+            color: #ff5555; /* Red error message */
+            font-size: 14px;
+            margin-top: 10px;
+            display: none; /* Initially hidden */
+        }
+
+        button {
+            padding: 12px 20px; /* Increase padding */
+            background-color: #0066cc; /* CVS Health Blue */
+            color: #ffffff; /* White text color */
+            border: none;
+            border-radius: 20px; /* Rounder corners */
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0052cc; /* Darker CVS Health Blue on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2><i class="fas fa-user-shield"></i> Admin Login</h2>
+        <form action="/admin" method="POST">
+            <div class="input-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Enter password...">
+                <div class="error-message" id="error-message">Invalid password. Please try again.</div>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <script>
+        // Check if the URL contains an error parameter indicating invalid password
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        if (error === 'invalid_password') {
+            document.getElementById('error-message').style.display = 'block'; // Display the error message
+        }
+    </script>
+</body>
+</html>

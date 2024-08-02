@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        .admin-container {
+            display: flex;
+        }
+
+        .sidebar {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .sidebar h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+            display: none; /* Initially hidden */
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .input-group input[type="text"],
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .input-group input[type="file"] {
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1e5494;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+            width: 100%;
+            display: block;
+            text-align: left;
+        }
+
+        button:hover {
+            background-color: #004b87;
+        }
+
+        .radio-group {
+            margin-bottom: 20px;
+        }
+
+        .radio-group label {
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            display: none;
+        }
+
+        .radio-group input[type="radio"] + span {
+            padding: 5px 10px;
+            background-color: #ccc;
+            border-radius: 3px;
+        }
+
+        .radio-group input[type="radio"]:checked + span {
+            background-color: #1e5494;
+            color: #fff;
+        }
+
+        .remove-documents,
+        .chat-history {
+            display: none;
+        }
+
+        #chat-history {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #chat-history th,
+        #chat-history td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #chat-history th {
+            background-color: #f2f2f2;
+        }
+
+        .divider {
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            color: #333;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="sidebar">
+            <h2><i class="fas fa-user-shield"></i> Admin Panel</h2>
+            <button onclick="toggleHome()">Home</button>
+            <button onclick="toggleFilepath()">File Path</button>
+            <button onclick="toggleUpload()">Add Document</button>
+            <button onclick="toggleRemove()">Remove Document</button>
+            <button onclick="toggleChatHistory()">Show Chat History</button>
+            <button onclick="toggleEvaluation()">Knowledge Test</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+        <div class="main-content">
+            <h2 id="section-title">Admin Panel</h2>
+            <div class="instructions">
+                <p>Please choose an option from the sidebar to proceed.</p>
+            </div>
+            <div class="document-list" style="display: none;">
+                <h2>Document List</h2>
+                <table id="document-table">
+                    <thead>
+                        <tr>
+                            <th>Document Name</th>
+                            <th>Date Added</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Document list will be dynamically populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="input-group filepath" style="display: none;">
+                <label for="filepath">File Path:</label>
+                <input type="text" id="filepath" name="filepath" placeholder="Enter file path...">
+                <button onclick="setFilePath()">Update</button>
+            </div>
+            <div class="input-group upload-documents">
+                <h2>Upload Document</h2>
+                <label for="file">Upload File:</label>
+                <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.txt">
+                <button id="add-document-btn" onclick="addDocs()">Add</button>
+            </div>
+            <div class="input-group remove-documents">
+                <h2>Remove Document</h2>
+                <label for="select-document">Select Document:</label>
+                <select id="select-document" name="select-document">
+                    <!-- Options will be dynamically populated here -->
+                </select>
+                <button onclick="remDocs()">Remove</button>
+            </div>
+            <button id="remove-button" class="remove-documents">Remove</button>
+            <div class="divider"></div>
+            <div id="chat-history" class="chat-history">
+                <h2>Chat History</h2>
+                <div class="input-group">
+                    <label for="filter-user">Filter by User ID:</label>
+                    <input type="text" id="filter-user" name="filter-user" placeholder="Enter user ID...">
+                </div>
+                <div class="input-group">
+                    <label for="from-date">From:</label>
+                    <input type="datetime-local" id="from-date" name="from-date">
+                </div>
+                <div class="input-group">
+                    <label for="to-date">To:</label>
+                    <input type="datetime-local" id="to-date" name="to-date">
+                </div>
+                <button onclick="applyFilters()">Apply Filters</button>
+                <table id="chat-history-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User ID</th>
+                            <th>User Query</th>
+                            <th>Bot Response</th>
+                            <th>Document Name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Chat history rows will be dynamically populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="evaluation-form" class="evaluation-form" style="display: none;">
+                <h2>Evaluation</h2>
+
+                    <label for="user-id">User ID:</label>
+                    <input type="text" id="user-id" name="user-id" placeholder="Enter user ID...">
+
+
+                    <label for="test-type">Test Type:</label>
+                    <select id="test-type" name="test-type">
+                        <option value="multiple-choice">Multiple Choice</option>
+                        <option value="essay">Essay</option>
+                        <!-- Add more test types as needed -->
+                    </select>
+
+                <button onclick="initiateTest()">Initiate Test</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+         var documents = [
+            { name: "Document 1", added: "2024-04-12" },
+            { name: "Document 2", added: "2024-04-13" },
+            { name: "Document 3", added: "2024-04-14" }
+        ];
+
+        function addDocs() {
+            var fileInput = document.getElementById('file');
+            var file = fileInput.files[0]; // Get the selected file
+            var formData = new FormData(); // Create a FormData object to send the file
+
+            formData.append('file', file); // Append the file to the FormData object
+
+            $.ajax({
+                type: 'POST',
+                url: '/add_document', // Specify the Flask route to handle the file upload
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    // Handle successful upload
+                    console.log('File uploaded successfully');
+                    alert('Document added to Knowledge base successfully');
+                },
+                error: function(error) {
+                    // Handle error
+                    console.error('Error uploading file:', error);
+                    alert('Error uploading file to knowledge base');
+                }
+            });
+        }
+
+
+        function remDocs() {
+            var selectedDocument = document.getElementById('select-document').value;
+            // Make an AJAX request to send the selected document to the Flask app
+
+            $.ajax({
+                type: 'POST',
+                url: '/remove_document',
+                data: { document: selectedDocument },
+                success: function(response) {
+                    // Handle success response
+                    console.log('Document removed successfully:', response);
+                    alert('Document removed successfully');
+                    fetchDocumentNames();
+                },
+                error: function(error) {
+                    // Handle error response
+                    console.error('Error removing document:', error);
+                    alert('Error removing document');
+                }
+            });
+        }
+
+        function fetchDocumentNames() {
+            $.ajax({
+                type: 'GET',
+                url: '/get_documents', // Flask route to fetch document names
+                success: function(response) {
+                    var select = document.getElementById('select-document');
+                    select.innerHTML = ''; // Clear previous options
+
+                    response.forEach(function(documentName) {
+                        var option = document.createElement('option');
+                        option.text = documentName;
+                        option.value = documentName;
+                        select.add(option);
+                    });
+                },
+                error: function(error) {
+                    console.error('Error fetching document names:', error);
+                }
+            });
+        }
+
+        function toggleHome() {
+            document.getElementById('section-title').innerText = "Document List";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+
+            var documentTableBody = document.querySelector('#document-table tbody');
+            documentTableBody.innerHTML = ''; // Clear previous content
+
+            // Populate document table
+            documents.forEach(function(doc) {
+                var row = document.createElement('tr');
+                var nameCell = document.createElement('td');
+                var dateCell = document.createElement('td');
+
+                nameCell.textContent = doc.name;
+                dateCell.textContent = doc.added;
+
+                row.appendChild(nameCell);
+                row.appendChild(dateCell);
+                documentTableBody.appendChild(row);
+            });
+
+            document.querySelector('.document-list').style.display = 'block'; // Display document list
+        }
+
+        function toggleFilepath() {
+            document.getElementById('section-title').innerText = "File Path";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+            document.querySelector('.filepath').style.display = 'block';
+        }
+
+        function updateFilePath() {
+            var newFilePath = document.getElementById('filepath').value;
+            // Here you can perform logic to update the file path
+            console.log("New file path:", newFilePath);
+            // Add further logic as per your requirements (e.g., send an AJAX request to update the file path)
+        }
+
+        function toggleUpload() {
+            document.getElementById('section-title').innerText = "Upload Document";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+            document.querySelector('.upload-documents').style.display = 'block';
+        }
+
+        function toggleRemove() {
+            fetchDocumentNames();
+            document.getElementById('section-title').innerText = "Remove Document";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+            document.querySelector('.remove-documents').style.display = 'block';
+        }
+
+        function toggleChatHistory() {
+            document.getElementById('section-title').innerText = "Chat History";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+            document.querySelector('.chat-history').style.display = 'block';
+        }
+
+        // JavaScript function to toggle visibility of evaluation form
+        function toggleEvaluation() {
+            document.getElementById('section-title').innerText = "Chat History";
+            document.querySelectorAll('.main-content > *').forEach(function (el) {
+                el.style.display = 'none';
+            });
+            document.querySelector('.instructions').style.display = 'none'; // Hide instructions
+            document.querySelector('.evaluation-form').style.display = 'block';
+        }
+
+         function initiateTest() {
+            var userId = document.getElementById('user-id').value;
+            var testType = document.getElementById('test-type').value;
+            // Here you can perform actions to initiate the test
+            $.ajax({
+                type: 'POST',
+                url: '/generate_questions',
+                data: { user_id: userId },
+                success: function(response) {
+                    alert('Test has been initiated');
+                },
+                error: function(error) {
+                    alert('Error initiating the test');
+                }
+            });
+        }
+
+        function applyFilters() {
+            var filterUser = document.getElementById('filter-user').value;
+            var fromDate = document.getElementById('from-date').value;
+            var toDate = document.getElementById('to-date').value;
+            // Here you can apply filters based on the values of filterUser, fromDate, and toDate
+            // For demonstration purposes, we'll just log the values
+            console.log('User ID:', filterUser);
+            console.log('From Date:', fromDate);
+            console.log('To Date:', toDate);
+        }
+
+        function logout() {
+            // Redirect user back to chat screen
+            window.location.href = "/";
+        }
+
+        function setFilePath() {
+            var path = document.getElementById('filepath').value;
+            $.ajax({
+                type: 'POST',
+                url: '/file_path',
+                data: { path: path },
+                success: function(response) {
+                    alert('File path stored successfully!');
+                },
+                error: function(error) {
+                    alert('Error storing file path.');
+                }
+            });
+        }
+
+    function fetchFilePath() {
+        $.ajax({
+            type: 'GET',
+            url: '/file_path',
+            success: function(response) {
+                document.getElementById('filepath').value = response.path;
+            },
+            error: function(error) {
+                alert('Error fetching file path.');
+            }
+        });
+
+    }
+    window.onload = fetchFilePath;
+
+    </script>
+</body>
+</html>

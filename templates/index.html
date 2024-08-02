@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Chat</title>
+    <!-- Include jQuery from a CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0; /* Remove default margin */
+            padding: 0; /* Remove default padding */
+            overflow: hidden; /* Prevent scrolling */
+            background-color: #0e0e0e; /* Dark background */
+            color: #fff; /* Light text color */
+        }
+        .header {
+            background-color: #1e5494;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between; /* Spread items across header */
+            align-items: center; /* Center items vertically */
+        }
+        .chat-header {
+            color: white; /* Text color */
+            font-size: 1.8em; /* Increase font size */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3); /* Add text shadow */
+            order: -1; /* Move chat-header to the left */
+        }
+        .home-link {
+            margin-right: 20px; /* Add space to the right */
+            text-decoration: none;
+            color: white; /* Text color */
+            font-size: 1.2em; /* Increase font size */
+            transition: transform 0.3s; /* Add transition effect */
+        }
+        .home-link:hover {
+            text-decoration: underline;
+            transform: scale(1.1); /* Increase size on hover */
+        }
+        .logo {
+            flex: 1; /* Take up remaining space */
+            display: flex;
+            justify-content: center; /* Center logo horizontally */
+        }
+        .logo img {
+            max-width: 100%;
+            max-height: 50px; /* Set maximum height */
+            height: auto;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            overflow: auto;
+            width: 100%; /* Fill entire width of viewport */
+            height: calc(100vh - 120px); /* Fill remaining height */
+        }
+        .chat-body {
+            padding: 10px;
+            height: calc(100% - 80px); /* Adjusted height for body */
+            overflow-y: auto;
+            background-color: #D3D3D3; /* Change background color */
+            white-space: pre-wrap;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px; /* Add rounded corners */
+            max-width: 70%; /* Limit the width of messages */
+        }
+        .user-message {
+            text-align: left;
+            color: #4CAF50; /* CVS Health green color */
+            margin-left: 30%; /* Position user messages to the right */
+            background-color: #ffffff; /* Background color for user messages */
+            border: 1px solid #ccc; /* Add border */
+        }
+        .bot-message {
+            text-align: left;
+            color: #008CBA; /* CVS Health blue color */
+            margin-right: 30%; /* Position bot messages to the left */
+            background-color: #f0f0f0; /* Background color for bot messages */
+            border: 1px solid #ccc; /* Add border */
+        }
+        .chat-footer {
+            padding: 10px;
+            background-color: #1e5494; /* CVS Health blue color */
+            position: absolute;
+            bottom: 0;
+            left: 0; /* Ensure chat footer is aligned to the left */
+            width: 100%;
+            height: 60px; /* Set the height of the chat footer */
+            display: flex; /* Use flexbox for layout */
+            align-items: center; /* Center vertically */
+        }
+        /* Added style for send button icon */
+        .send-button {
+            background-color: #ffffff; /* White background */
+            color: #1e5494; /* CVS Health blue color */
+            border: none;
+            padding: 15px;
+            border-radius: 5px;
+            margin-right: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s; /* Add transition effect */
+        }
+        .send-button:hover {
+            background-color: #004b87; /* Darker blue for hover effect */
+            color: #ffffff; /* White text color */
+        }
+        /* Added style for user input box */
+        .user-input {
+            flex: 1; /* Take remaining space */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+            /*background-color: transparent; /* Transparent background */
+            color: #000000; /* White text color */
+        }
+        /* Added style for icon */
+        .send-icon {
+            width: 20px; /* Set width of the icon */
+            height: auto; /* Maintain aspect ratio */
+        }
+        .typing::after {
+            content: "...";
+            animation: typing 1s infinite;
+            color: #fff; /* White color for typing animation */
+        }
+
+        @keyframes typing {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="chat-header"><i class="fas fa-robot"></i> KM Bot</h1>
+        <div class="logo">
+            <img src="/static/logo.png" alt="Knowledge Portal Logo">
+        </div>
+        <a href="/" class="home-link"><i class="fas fa-home"></i></a>
+    </div>
+    <div class="chat-container">
+        <div class="chat-body" id="chat-body">
+            <div class="bot-message message">😄Welcome to KM Bot. How can I assist you today?</div>
+
+        </div>
+        <div class="chat-footer">
+            <!-- User input and send button container -->
+            <div style="display: flex; flex: 1;">
+                <!-- User input box -->
+                <input type="text" id="user-input" class="user-input" placeholder="Type your message...">
+                <!-- Send button with icon -->
+                <button onclick="sendMessage()" class="send-button"><img src="/static/send_icon.png" alt="Send" class="send-icon"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+         function sendMessage() {
+            var userMessage = document.getElementById('user-input').value;
+            if (userMessage.trim() === '') {
+                return; // If the message is empty or contains only whitespace, do nothing
+            }
+            // Display user message
+            var chatBody = document.getElementById('chat-body');
+            var userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'user-message message';
+            userMessageDiv.textContent = userMessage;
+            chatBody.appendChild(userMessageDiv);
+
+            // Display typing animation message
+            // var chatBody = document.getElementById('chat-body');
+            var typingMessageDiv = document.createElement('div');
+            typingMessageDiv.className = 'bot-message message typing';
+            typingMessageDiv.textContent = 'Typing...';
+            chatBody.appendChild(typingMessageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // Clear user input
+            document.getElementById('user-input').value = '';
+
+            // Send the message to the server
+            $.ajax({
+                url: '/_admin_chat', // Flask route to handle the message
+                method: 'POST',
+                data: { user_message: userMessage },
+                success: function(response) {
+
+                    // Remove typing animation message
+                    var typingMessage = chatBody.querySelector('.typing');
+                    if (typingMessage) {
+                        chatBody.removeChild(typingMessage);
+                    }
+                    // Display bot message
+                    var botMessageDiv = document.createElement('div');
+                    botMessageDiv.className = 'bot-message message';
+                    botMessageDiv.textContent = response.bot_response;
+                    chatBody.appendChild(botMessageDiv);
+
+                    // Scroll to bottom of chat body
+                    chatBody.scrollTop = chatBody.scrollHeight;
+
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    // Handle error
+                }
+            });
+        }
+
+        // Function to handle keypress event
+        function handleKeyPress(event) {
+            if (event.keyCode === 13) { // 13 is the key code for Enter key
+                sendMessage(); // Call sendMessage function if Enter key is pressed
+            }
+        }
+
+        // Attach event listener to input box
+        document.getElementById('user-input').addEventListener('keypress', handleKeyPress);
+
+
+        function getBotResponse(userMessage) {
+            // Here you can replace this with actual API call to your GPT model
+            // For demonstration purposes, we'll just echo the user's message
+            return "You said: " + userMessage;
+        }
+    </script>
+</body>
+</html>

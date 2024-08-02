@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluation Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        /* General styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f8f8; /* Light gray */
+            margin: 0;
+            padding: 0;
+            color: #333; /* Dark gray */
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #fff; /* White */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .heading {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-transform: uppercase;
+            color: #003594; /* CVS Health Blue */
+        }
+        button {
+            background-color: #003594; /* CVS Health Blue */
+            color: #fff; /* White */
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        button:hover {
+            background-color: #002478; /* Darker CVS Health Blue */
+        }
+        /* Form styles */
+        label {
+            display: block;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #333; /* Dark gray */
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc; /* Light gray */
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #f5f5f5; /* Light gray */
+            color: #333; /* Dark gray */
+            font-size: 1em;
+        }
+        /* Questions and options styles */
+        .question {
+            margin-bottom: 30px;
+        }
+        .question-text {
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            color: #333; /* Dark gray */
+        }
+        .options label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #555; /* Medium gray */
+        }
+        .correct {
+            color: #4CAF50 !important; /* Green */
+            font-weight: bold;
+        }
+        .wrong {
+            color: #FF5722 !important; /* Orange */
+            font-weight: bold;
+        }
+        /* Result container */
+        #result-container {
+            position: relative;
+            margin-top: 20px; /* Add margin to push it below the questions */
+            padding: 30px;
+            background-color: #f5f5f5; /* Light gray */
+            border-radius: 10px;
+            display: none;
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            background-color: #f5f5f5; /* Light gray */
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            color: #003594; /* CVS Health Blue */
+            z-index: 1000; /* Ensure it stays on top of other elements */
+        }
+
+        .questions-container {
+            margin-top: 100px;
+        }
+
+        .home-link-container {
+            float: right;
+            margin-bottom: 10px;
+        }
+
+        .home-link {
+            color: #003594; /* CVS Health Blue */
+            text-decoration: none;
+            font-size: 1.1em;
+        }
+
+        .home-link:hover {
+            color: #002478; /* Darker CVS Health Blue */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="heading"><i class="fas fa-graduation-cap"></i> Knowledge Assessment</h1>
+        <div id="timer" class="timer"></div>
+        <div class="home-link-container">
+            <a href="/" class="home-link">Back to Home</a>
+        </div>
+        <div>
+            <label for="user-id">Enter Your ID:</label>
+            <input type="text" id="user-id" placeholder="Enter your ID here">
+        </div>
+
+        <div class="questions-container" id="questions-container" style="display: none;">
+            <!-- Questions will be dynamically loaded here -->
+        </div>
+        <button id="submit-answers" onclick="submitAnswers()" style="display: none;">Submit Answers</button>
+        <div id="result-container" style="display:none;">
+            <h2>Result</h2>
+            <div id="feedback"></div>
+            <div id="score"></div>
+        </div>
+    </div>
+
+    <script>
+        var questions = [];
+        var userId;
+
+        // Event listener for Enter key
+        document.getElementById("user-id").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                loadQuestions();
+            }
+        });
+        var timerInterval;
+
+        function startTimer(duration, display) {
+            var timer = duration, minutes, seconds;
+            timerInterval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    submitAnswers();
+                }
+            }, 1000);
+        }
+
+        function loadQuestions() {
+            userId = document.getElementById("user-id").value;
+            if (!userId) {
+                alert("Please enter a valid user ID.");
+                return;
+            }
+            $.ajax({
+                url: '/get_questions',
+                method: 'GET',
+                data: { user_id: userId },
+                success: function(response) {
+                    if (response.length === 0) {
+                        alert("No questions found for the provided user ID.");
+                        return;
+                    }
+                    questions = response;
+                    displayQuestions();
+                    document.getElementById("submit-answers").style.display = "block";
+                    document.getElementById("user-id").disabled = true; // Disable user ID input after loading questions
+                    var thirtyMinutes = 60 * 1,
+                        display = document.querySelector('#timer');
+                    startTimer(thirtyMinutes, display);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+
+        function displayQuestions() {
+            var questionsContainer = document.getElementById("questions-container");
+            questionsContainer.style.display = "block"; // Show questions container
+            questionsContainer.innerHTML = ""; // Clear previous questions
+
+            questions.forEach(function(question) {
+                var questionDiv = document.createElement("div");
+                questionDiv.classList.add("question");
+
+                var questionText = document.createElement("div");
+                questionText.classList.add("question-text");
+                questionText.textContent = question.text;
+                questionDiv.appendChild(questionText);
+
+                var optionsContainer = document.createElement("div");
+                optionsContainer.classList.add("options");
+                question.options.forEach(function(option) {
+                    var optionItem = document.createElement("label");
+
+                    var radioInput = document.createElement("input");
+                    radioInput.type = "radio";
+                    radioInput.name = "question-" + question.id;
+                    radioInput.value = option;
+                    optionItem.appendChild(radioInput);
+
+                    var optionText = document.createTextNode(option);
+                    optionItem.appendChild(optionText);
+
+                    optionsContainer.appendChild(optionItem);
+                });
+                questionDiv.appendChild(optionsContainer);
+                questionsContainer.appendChild(questionDiv);
+            });
+        }
+
+        function submitAnswers() {
+            clearInterval(timerInterval);
+            var userAnswers = {};
+            questions.forEach(function(question) {
+                var selectedOption = document.querySelector('input[name="question-' + question.id + '"]:checked');
+                if (selectedOption) {
+                    var isCorrect = selectedOption.value === question.correct_answer;
+                    if (isCorrect) {
+                        selectedOption.parentElement.classList.add("correct");
+                    } else {
+                        // Find the correct option and highlight it
+                        var correctOption = selectedOption.closest(".question").querySelector('input[value="' + question.correct_answer + '"]');
+                        if (correctOption) {
+                            correctOption.parentElement.classList.add("correct");
+                        }
+                        selectedOption.parentElement.classList.add("wrong");
+                    }
+                    userAnswers[question.id] = { selected: selectedOption.value, correct: question.correct_answer };
+                }
+            });
+
+            $.ajax({
+                url: '/submit_answers',
+                method: 'POST',
+                data: {
+                    user_id: userId,
+                    user_answers: JSON.stringify(userAnswers)
+                },
+                success: function(response) {
+                    displayResult(response);
+                    document.getElementById("submit-answers").disabled = true; // Disable submit button after submission
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+
+        function displayResult(result) {
+            var feedbackDiv = document.getElementById("feedback");
+            var scoreDiv = document.getElementById("score");
+            var correctAnswers = 0;
+            var wrongAnswers = 0;
+            for (var key in result) {
+                var isCorrect = result[key] === 'correct';
+                if (isCorrect) {
+                    correctAnswers++;
+                } else {
+                    wrongAnswers++;
+                }
+            }
+            var totalQuestions = correctAnswers + wrongAnswers;
+            scoreDiv.innerHTML = "<p>Total Questions: " + totalQuestions + "</p><p>Correct Answers: " + correctAnswers + "</p><p>Wrong Answers: " + wrongAnswers + "</p>";
+            document.getElementById("result-container").style.display = "block";
+        }
+    </script>
+</body>
+</html>
